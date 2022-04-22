@@ -5,16 +5,13 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
 import dev.onvoid.webrtc.media.MediaStreamTrack;
 import dev.onvoid.webrtc.media.audio.AudioTrack;
 import dev.onvoid.webrtc.media.audio.AudioTrackSink;
-import dev.onvoid.webrtc.media.video.NativeI420Buffer;
 import dev.onvoid.webrtc.media.video.VideoFrame;
-import dev.onvoid.webrtc.media.video.VideoFrameBuffer;
 import dev.onvoid.webrtc.media.video.VideoTrack;
 import dev.onvoid.webrtc.media.video.VideoTrackSink;
 import file.TextFileWriter;
@@ -103,6 +100,7 @@ public class Recorder {
 			try(final TextFileWriter textFileWriter = TextFileWriter.open(infoFileName)) {
 				
 				textFileWriter.writeLine(message, args);
+				Log.lo("Recording: %s ", infoFileName);
 				Log.log(message, args);				
 				
 			} catch (FileNotFoundException ex) {
