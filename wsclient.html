@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>WebSocketClient</title>
+
+		<style type="text/css">
+			video 
+			{
+				width: 320px;
+				border:1px solid black;
+			}
+		</style>
+		
+	</head>
+
+	<body>
+		<div>
+			<span id="sessionIdSpan">sessionid</span><br/>
+			<video id="localVideo" autoplay playsinline muted></video><br/>
+			<button type="button" id="startButton">Start</button>
+			<button type="button" id="mirrorButton" disabled>mirror</button>
+			<button type="button" id="connectButton" disabled>connect</button>
+			<button type="button" id="recordButton" disabled>Record</button>
+		</div>
+		<div id="remoteVideos">
+		</div>
+
+		<script type="text/javascript">
+		
+			'use strict';
+
+			const startButton = document.getElementById('startButton');
+			startButton.addEventListener('click', clickStart);
+
+			const mirrorButton = document.getElementById('mirrorButton');
+			mirrorButton.addEventListener('click', clickMirror);
+			
+			const connectButton = document.getElementById('connectButton');
+			connectButton.addEventListener('click', clickConnect);
+			
+			const recordButton = document.getElementById('recordButton');
+			recordButton.addEventListener('click', clickRecord);
+
+			const offerOptions = {offerToReceiveVideo:1, offerToReceiveAudio:1};
+
+			const iceServers = {
+				'iceServers': [
+					{'url': 'stun:stun.l.google.com:19302'}
+				]};
+			const signallingServer = 'ws://localhost:1969/';
+
+			const localVideo = document.getElementById('localVideo');
+			const remoteVideos = document.getElementById('remoteVideos');
+
+			const peerConnection = new RTCPeerConnection(iceServers);
+			peerConnection.addEventListener('icecandidate', onIceCandidate);
+			peerConnection.addEventListener('track', onTrack);
+			peerConnection.addEventListener('negotiationneeded', onNegotiationNeeded);
+
+			let webSocket;
+			let sessionId;
+
+			function clickStart(event) {
+				
+				const mediaStreamConstraints = {video: true, audio: true};
+				
+				navigator.mediaDevices.getUserMedia(mediaStreamConstraints)
+				.then((mediaStream) => {
+					
+					localVideo.srcObject = mediaStream;
+					connectToServer();
+				});
+			}
+
+
+			function clickMirror(event) {
+
+				const payload = '{"message":"mirror"}';
+				console.log(payload);
+				webSocket.send(payload);
+				
+			}
+			
+			function clickRecord(event) {
+
+				const payload = '{"message":"record"}';
+				console.log(payload);
+				webSocket.send(payload);
+				
+				recordButton.disabled = true;
+				
+			}
+			
+			function clickConnect(event) {
+			
+				const sessionToConnect = prompt("Session To Connect", "sessionId");
+				const payload = '{"message":"connect", "sessionid":\"' + sessionToConnect + '\"}';
+				
+				if (sessionToConnect == null) return;	// cancel pressed
+				if (sessionToConnect == '') return;		// blank entry
+				
+				console.log(payload);
+				
+				webSocket.send(payload);
+
+			}
+
+			function connectToServer()
+			{
+				webSocket = new WebSocket(signallingServer);
+
+				// upon opening the server will send a greeting message
+				webSocket.addEventListener('open', onSocketOpen);
+				webSocket.addEventListener('message', onSocketMessage);
+				webSocket.addEventListener('close', onSocketClose); 
+			}
+
+			function onSocketOpen(event){
+
+				console.log('socket opened');
+			}
+
+			function onSocketMessage(event) {
+			
+				const payload = JSON.parse(event.data);
+				const message = payload.message;
+
+				console.log('Message from server ' + message);
+
+				if (message == "greeting") {
+	
+					sessionId = payload.sessionid;
+					const sessionIdSpan = document.getElementById('sessionIdSpan');
+					sessionIdSpan.innerHTML = sessionId;
+					
+					// this will cause negotiation needed to trigger
+					const mediaStream = localVideo.srcObject;
+					for (const track of mediaStream.getTracks()) peerConnection.addTrack(track, mediaStream);
+					
+					mirrorButton.disabled = false;
+					connectButton.disabled = false;
+					recordButton.disabled = false;
+					startButton.disabled = true;
+				}
+				
+				if (message == "answer") {
+				
+					const sdp = payload.sdp;
+				
+					peerConnection.setRemoteDescription(sdp)
+					.then(() => {
+						console.log('remote description set');
+						
+					});
+				}
+				
+				if (message == "icecandidate") {
+				
+					const candidate = payload.candidate;
+				
+					console.log('addIceCandidate');
+				
+					peerConnection.addIceCandidate(candidate);
+				}
+				
+				if (message == "negotiate") {
+					negotiate();
+				}
+				
+				if (message == "recording") {
+					
+					const recording = payload.recording;
+					
+					if (recording == "true") {
+						recordButton.innerText = 'Pause';
+					} else {
+						
+						recordButton.innerText = 'Record';
+					}
+					
+					recordButton.disabled = false;
+				}
+			}
+
+			function onSocketClose(event) {
+			
+				console.log('socket closed');
+				
+				mirrorButton.disabled = true;
+				connectButton.disabled = true;
+				recordButton.disabled = true;
+				startButton.disabled = false;
+				
+			}
+
+
+			function onIceCandidate(event) {
+
+				const peerConnection = event.target;
+				const candidate = event.candidate;
+				
+				if (candidate != null)
+				{
+					const payload = '{"message":"icecandidate", "candidate":' + JSON.stringify(candidate) + '}';
+
+					console.log('onIceCandidate:' + payload);
+
+					webSocket.send(payload);
+					
+				}
+			}
+			
+			function onNegotiationNeeded(event) {
+				
+				negotiate();
+			}
+
+			function onTrack(event) {
+				
+				console.log('Add Track');
+
+				const remoteStream = new MediaStream();
+				const remoteVideo = document.createElement('video');
+				
+				remoteVideos.appendChild(remoteVideo);
+				
+				remoteVideo.autoplay = true;
+				remoteVideo.playsinline = true;
+
+				remoteStream.addTrack(event.track);
+
+				remoteVideo.srcObject = remoteStream;
+			}
+
+			function negotiate() {
+				
+				console.log("negotiating");
+
+				peerConnection.createOffer(offerOptions)
+				.then ((description) =>  {
+				
+					peerConnection.setLocalDescription(description)
+					.then(() => {
+							
+						console.log('local peer description set');
+						const payload = '{"message":"offer", "sdp":' + JSON.stringify(description) + '}';
+					
+						console.log('sending offer');
+
+						webSocket.send(payload);
+
+					})
+				});
+				
+			}
+
+			
+		</script>
+	</body>
+</html>
