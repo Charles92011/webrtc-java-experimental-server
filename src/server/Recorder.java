@@ -68,63 +68,16 @@ public class Recorder {
 		@Override
 		public void onVideoFrame(VideoFrame frame) {
 
-			try {
-			
-			VideoFrameBuffer buffer = frame.buffer;
-			NativeI420Buffer fourTwentyBuffer = (NativeI420Buffer)buffer.toI420();
-			final ByteBuffer y = fourTwentyBuffer.getDataY();
-			final ByteBuffer u = fourTwentyBuffer.getDataY();
-			final ByteBuffer v = fourTwentyBuffer.getDataY();			
-
-			Log.log(
-				"w:%d, h:%d, sY:%d, sU:%d, sV:%d", //, Y:%d, U:%d, V:%d",
-					fourTwentyBuffer.getWidth(),
-					fourTwentyBuffer.getHeight(),
-					fourTwentyBuffer.getStrideY(),
-					fourTwentyBuffer.getStrideU(),
-					fourTwentyBuffer.getStrideV());/*,
-					y.array().length,
-					u.array().length,
-					v.array().length);*/
-			} catch(Exception ex) {
-				ex.printStackTrace();
-			}
-			
-			/*
 			if (!infoWritten)
 				writeInfo("width: %d, height: %d", frame.buffer.getWidth(), frame.buffer.getHeight());
 			
 			try (FileOutputStream fos = new FileOutputStream(file, true)) {
 
-				final I420Buffer i420Buffer = frame.buffer.toI420();
-
-				final ByteBuffer sizeData = ByteBuffer.allocate(Integer.BYTES * 5);
-				sizeData.putInt(Integer.BYTES * 0, frame.buffer.getHeight());
-				sizeData.putInt(Integer.BYTES * 1, frame.buffer.getWidth());
-				sizeData.putInt(Integer.BYTES * 2, i420Buffer.getStrideY());
-				sizeData.putInt(Integer.BYTES * 3, i420Buffer.getStrideU());
-				sizeData.putInt(Integer.BYTES * 4, i420Buffer.getStrideV());
-				
-				final ByteBuffer y = i420Buffer.getDataY();
-				final ByteBuffer u = i420Buffer.getDataY();
-				final ByteBuffer v = i420Buffer.getDataY();
-				
-				
-				Log.log("sizeData:%d, Y:%d, U:%d, v:%d", 
-						sizeData.array().length,
-						y.array().length,
-						u.array().length,
-						v.array().length);
-				fos.write(sizeData.array());
-				fos.write(y.array());
-				fos.write(u.array());
-				fos.write(v.array());
+				// this is the big mystery
 		            
 	        } catch (Exception ex) {
 	        	ex.printStackTrace();
 	        }
-			*/
-			this.stop();
 		}
 
 		@Override
