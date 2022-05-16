@@ -101,6 +101,7 @@ public class Client implements PeerConnectionObserver {
 		this.session = session;
 		this.sessionId =  session.getId();
 
+		@SuppressWarnings("unused")
 		final MessageTask messageTask = MessageTask.Go(this, message);
 		
     }
