@@ -101,8 +101,7 @@ public class Client implements PeerConnectionObserver {
 		this.session = session;
 		this.sessionId =  session.getId();
 
-		final MessageTask messageTask = new MessageTask(this, message);
-		messageTask.go();
+		final MessageTask messageTask = MessageTask.Go(this, message);
 		
     }
     
@@ -268,11 +267,6 @@ public class Client implements PeerConnectionObserver {
 		final String fileName = String.format("%s-%s-%s", track.getKind(), sessionId, (++trackCounter).toString().trim());
 		recorder.addTrack(fileName, receiver.getTrack());
 		
-	}
-	
-	public void mirror() {
-		
-		connect(this);
 	}
 
 	public void connect(Client clientToConnect) {

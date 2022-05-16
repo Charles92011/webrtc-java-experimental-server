@@ -16,6 +16,15 @@ public class MessageTask implements Runnable {
 	private String message;
 	JSONObject payloadObject;
 	
+	public static MessageTask Go(Client client, String payload) {
+		
+		MessageTask  messageTask = new MessageTask(client, payload);
+		messageTask.go();
+		
+		return messageTask;
+	}
+	
+	
 	public MessageTask(Client client, String payload) {
 
 		this.client = client;
@@ -84,7 +93,7 @@ public class MessageTask implements Runnable {
 		
 		if (message.equals("mirror")) {
 			
-			client.mirror();
+			client.connect(client);
 		}
 
 		if (message.equals("connect")) {
