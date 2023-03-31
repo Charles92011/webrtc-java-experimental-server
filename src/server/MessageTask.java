@@ -117,11 +117,5 @@ public class MessageTask implements Runnable {
 			}
 
 		}
-		
-		if (message.equals("record")) {
-			
-			client.toggleRecording();
-		}
 	}
-	
 }

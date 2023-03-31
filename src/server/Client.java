@@ -27,7 +27,6 @@ import dev.onvoid.webrtc.RTCSessionDescription;
 import dev.onvoid.webrtc.SetSessionDescriptionObserver;
 import dev.onvoid.webrtc.media.MediaStream;
 import dev.onvoid.webrtc.media.MediaStreamTrack;
-import recording.Recorder;
 import utility.Log;
 
 /*
@@ -44,9 +43,6 @@ public class Client implements PeerConnectionObserver {
 	
 	private String sessionId;
 	private Session session;
-	
-	private Recorder recorder = new Recorder();
-	private Integer trackCounter = 0;
 	
 	public Client() {
 		
@@ -90,8 +86,6 @@ public class Client implements PeerConnectionObserver {
 		this.sessionId =  session.getId();
 
 		ConnectionManager.remove(this);
-		
-		recorder.stop();
 		
 		Log.log("onClose:: %s", sessionId);        
     }
@@ -266,15 +260,11 @@ public class Client implements PeerConnectionObserver {
 		final MediaStreamTrack track = receiver.getTrack();
 		Log.log("onAddTrack %s", track.getKind());
 		
-		final String fileName = String.format("%s-%s-%s", track.getKind(), sessionId, (++trackCounter).toString().trim());
-		recorder.addTrack(fileName, receiver.getTrack());
-		
 	}
 
 	public void connect(Client clientToConnect) {
 		
 		final RTCPeerConnection connectionToConnect = clientToConnect.peerConnection; 
-		
 		final int receivers = connectionToConnect.getReceivers().length;
 		
 		if (receivers == 0) return;
@@ -302,19 +292,4 @@ public class Client implements PeerConnectionObserver {
     	sendMessage(payload);
     	
 	}
-	
-	public void toggleRecording() {
-		
-		if (recorder.getRecording()) {
-			
-			recorder.stop();
-		} else {
-			
-			recorder.start();
-		}
-
-        final String payload = String.format("{\"message\":\"recording\",\"recording\":\"%s\"}", recorder.getRecording());
-    	sendMessage(payload);
-	}
-	
 }

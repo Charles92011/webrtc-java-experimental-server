@@ -19,8 +19,6 @@
 			<video id="localVideo" autoplay playsinline muted></video><br/>
 			<button type="button" id="startButton">Start</button>
 			<button type="button" id="mirrorButton" disabled>mirror</button>
-			<button type="button" id="connectButton" disabled>connect</button>
-			<button type="button" id="recordButton" disabled>Record</button>
 		</div>
 		<div id="remoteVideos">
 		</div>
@@ -35,18 +33,12 @@
 			const mirrorButton = document.getElementById('mirrorButton');
 			mirrorButton.addEventListener('click', clickMirror);
 			
-			const connectButton = document.getElementById('connectButton');
-			connectButton.addEventListener('click', clickConnect);
-			
-			const recordButton = document.getElementById('recordButton');
-			recordButton.addEventListener('click', clickRecord);
-
 			const offerOptions = {offerToReceiveVideo:1, offerToReceiveAudio:1};
-
 			const iceServers = {
 				'iceServers': [
 					{'url': 'stun:stun.l.google.com:19302'}
 				]};
+
 			const signallingServer = 'ws://localhost:1969/';
 
 			const localVideo = document.getElementById('localVideo');
@@ -79,30 +71,6 @@
 				console.log(payload);
 				webSocket.send(payload);
 				
-			}
-			
-			function clickRecord(event) {
-
-				const payload = '{"message":"record"}';
-				console.log(payload);
-				webSocket.send(payload);
-				
-				recordButton.disabled = true;
-				
-			}
-			
-			function clickConnect(event) {
-			
-				const sessionToConnect = prompt("Session To Connect", "sessionId");
-				const payload = '{"message":"connect", "sessionid":\"' + sessionToConnect + '\"}';
-				
-				if (sessionToConnect == null) return;	// cancel pressed
-				if (sessionToConnect == '') return;		// blank entry
-				
-				console.log(payload);
-				
-				webSocket.send(payload);
-
 			}
 
 			function connectToServer()
@@ -138,8 +106,6 @@
 					for (const track of mediaStream.getTracks()) peerConnection.addTrack(track, mediaStream);
 					
 					mirrorButton.disabled = false;
-					connectButton.disabled = false;
-					recordButton.disabled = false;
 					startButton.disabled = true;
 				}
 				
@@ -157,28 +123,12 @@
 				if (message == "icecandidate") {
 				
 					const candidate = payload.candidate;
-				
 					console.log('addIceCandidate');
-				
 					peerConnection.addIceCandidate(candidate);
 				}
 				
 				if (message == "negotiate") {
 					negotiate();
-				}
-				
-				if (message == "recording") {
-					
-					const recording = payload.recording;
-					
-					if (recording == "true") {
-						recordButton.innerText = 'Pause';
-					} else {
-						
-						recordButton.innerText = 'Record';
-					}
-					
-					recordButton.disabled = false;
 				}
 			}
 
@@ -187,10 +137,7 @@
 				console.log('socket closed');
 				
 				mirrorButton.disabled = true;
-				connectButton.disabled = true;
-				recordButton.disabled = true;
 				startButton.disabled = false;
-				
 			}
 
 
@@ -264,9 +211,7 @@
 
 					})
 				});
-				
 			}
-
 			
 		</script>
 	</body>
